@@ -1,0 +1,425 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Gram Voice</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky top bar with three views (Report / Track / Dashboard); report view is a two-column form + live model panel that stacks on phones. */
+:root{
+  --bg:#f1f5f0; --surface:#ffffff; --surface2:#e7eee6; --ink:#14302b; --muted:#53695f; --line:#cfdbd0;
+  --accent:#0e6b61; --accent-ink:#ffffff; --accent-soft:#d3ece6;
+  --ok:#2f7d3a; --ok-soft:#dcefd9; --warn:#a96a00; --warn-soft:#f8e6c0; --crit:#b3261e; --crit-soft:#f7d9d6; --info:#2a5fa8; --info-soft:#d9e5f6;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1a18; --surface:#15251f; --surface2:#1c3029; --ink:#e3efe8; --muted:#97b0a5; --line:#2a4137;
+  --accent:#4fc3b0; --accent-ink:#06211c; --accent-soft:#17403a;
+  --ok:#7ccf86; --ok-soft:#1d3a22; --warn:#e5b04f; --warn-soft:#3b2e10; --crit:#ff8f86; --crit-soft:#451c19; --info:#8db6ee; --info-soft:#1b3050; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1a18; --surface:#15251f; --surface2:#1c3029; --ink:#e3efe8; --muted:#97b0a5; --line:#2a4137;
+  --accent:#4fc3b0; --accent-ink:#06211c; --accent-soft:#17403a;
+  --ok:#7ccf86; --ok-soft:#1d3a22; --warn:#e5b04f; --warn-soft:#3b2e10; --crit:#ff8f86; --crit-soft:#451c19; --info:#8db6ee; --info-soft:#1b3050; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding-block:0 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);line-height:1.15;margin:0;text-wrap:balance}
+h2{font-size:1.5rem;font-weight:800}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 24px;padding-block:14px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:1.3rem;letter-spacing:-.01em}
+.brand small{display:block;font-family:var(--body);font-weight:500;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+nav{display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px}
+nav a{padding:8px 16px;border-radius:7px;text-decoration:none;color:var(--muted);font-weight:600;font-size:.9rem}
+nav a[aria-current="page"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.intro{padding-block:28px 20px;display:grid;gap:8px;max-width:62ch}
+.intro p{color:var(--muted)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:820px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;min-width:0}
+.panel.model{background:var(--surface2);border-style:dashed}
+.field{display:grid;gap:6px;margin-bottom:16px}
+label,.lbl{font-weight:600;font-size:.86rem}
+.hint{font-size:.8rem;color:var(--muted)}
+input[type=text],select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+textarea{min-height:120px;resize:vertical}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:480px){.row{grid-template-columns:minmax(0,1fr)}}
+.photo{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.photo img{width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+input[type=file]{font:inherit;font-size:.85rem;max-width:100%}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:11px 20px;font-weight:600}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:6px 12px;font-size:.8rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:99px;font-size:.76rem;font-weight:600;white-space:nowrap}
+.pill.High{background:var(--crit-soft);color:var(--crit)}
+.pill.Medium{background:var(--warn-soft);color:var(--warn)}
+.pill.Low{background:var(--ok-soft);color:var(--ok)}
+.pill.st{background:var(--info-soft);color:var(--info)}
+.pill.st.Resolved{background:var(--ok-soft);color:var(--ok)}
+.pill.sample{background:var(--surface2);color:var(--muted)}
+.pred-main{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0 14px}
+.pred-main strong{font-family:var(--display);font-size:1.25rem}
+.bars{display:grid;gap:8px;margin:12px 0}
+.bar-row{display:grid;grid-template-columns:minmax(0,9.5rem) minmax(0,1fr) 3rem;gap:10px;align-items:center;font-size:.84rem}
+.bar-row span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.track{height:10px;background:var(--bg);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.fill{height:100%;background:var(--accent);border-radius:6px;width:0}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+.meta{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:.85rem;margin-top:10px}
+.meta dt{color:var(--muted)} .meta dd{margin:0}
+.note{font-size:.78rem;color:var(--muted);margin-top:14px;line-height:1.5}
+code{font-size:.85em;background:var(--bg);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+.ok-box{background:var(--ok-soft);color:var(--ok);padding:12px 14px;border-radius:8px;margin-top:14px;font-weight:500}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.tile b{display:block;font-family:var(--display);font-size:1.9rem;font-variant-numeric:tabular-nums}
+.tile span{font-size:.8rem;color:var(--muted)}
+.tile.crit b{color:var(--crit)}
+.filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.filters select{width:auto}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:.88rem}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--surface2)}
+tr:last-child td{border-bottom:0}
+td .desc{max-width:34ch;color:var(--muted);margin-top:2px}
+.id{font-family:var(--display);font-weight:600}
+.search{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+.search input{flex:1 1 220px;width:auto}
+.ticket{display:grid;gap:16px}
+.timeline{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:0}
+.timeline li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;padding-bottom:16px;position:relative}
+.timeline li::before{content:"";position:absolute;left:8px;top:18px;bottom:0;width:2px;background:var(--line)}
+.timeline li:last-child::before{display:none}
+.dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);background:var(--bg);margin-top:2px}
+.timeline li.done .dot{background:var(--accent);border-color:var(--accent)}
+.timeline li.done::before{background:var(--accent)}
+.timeline li.now .dot{box-shadow:0 0 0 4px var(--accent-soft)}
+.timeline .when{font-size:.78rem;color:var(--muted)}
+.cards{display:grid;gap:10px}
+.mini{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;text-align:left;width:100%;color:var(--ink)}
+.mini:hover{border-color:var(--accent)}
+.mini .t{min-width:0;flex:1 1 200px}
+.mini .t div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:.85rem}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-weight:500;z-index:20;max-width:90vw}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+footer{margin-top:36px;color:var(--muted);font-size:.8rem}
+@media(prefers-reduced-motion:no-preference){.fill{transition:width .35s ease}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="bar">
+      <div class="brand">
+        <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="9" fill="var(--accent)"/><path d="M7 24l10-12 10 12z" fill="var(--accent-ink)" opacity=".9"/><rect x="15" y="19" width="4" height="5" fill="var(--accent)"/><circle cx="25" cy="9" r="3" fill="var(--accent-ink)"/></svg>
+        <div>Gram Voice<small>Smart village problem reporting</small></div>
+      </div>
+      <nav aria-label="Sections">
+        <a href="#report" data-view="report">Report a problem</a>
+        <a href="#track" data-view="track">Track</a>
+        <a href="#dashboard" data-view="dashboard">Panchayat dashboard</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- REPORT -->
+<section id="v-report" hidden>
+  <div class="intro">
+    <h2>Tell the panchayat what needs fixing</h2>
+    <p>Describe the problem in English, Tamil or Tanglish (for example "thanni varala"). The system reads your text, picks the category and urgency, and sends it to the right department.</p>
+  </div>
+  <div class="grid2">
+    <form class="panel" id="form" novalidate>
+      <div class="row">
+        <div class="field"><label for="name">Your name</label><input type="text" id="name" placeholder="e.g. Meenakshi" autocomplete="name"></div>
+        <div class="field"><label for="phone">Mobile number (optional)</label><input type="text" id="phone" inputmode="numeric" placeholder="10 digits" autocomplete="tel"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="ward">Ward</label>
+          <select id="ward"><option>Ward 1</option><option>Ward 2</option><option>Ward 3</option><option>Ward 4</option><option>Ward 5</option><option>Ward 6</option><option>Ward 7</option><option>Ward 8</option></select></div>
+        <div class="field"><label for="place">Street or landmark</label><input type="text" id="place" placeholder="e.g. Near temple tank, North Street"></div>
+      </div>
+      <div class="field">
+        <label for="desc">What is the problem?</label>
+        <textarea id="desc" placeholder="e.g. The street light near the school has not worked for a week and children walk home in the dark."></textarea>
+        <span class="hint" id="descHint">Write at least a short sentence so the model has something to read.</span>
+      </div>
+      <div class="field">
+        <span class="lbl">Photo (optional)</span>
+        <div class="photo"><input type="file" id="photo" accept="image/*" aria-label="Attach a photo"><img id="photoPrev" alt="Photo preview" hidden></div>
+      </div>
+      <div class="field">
+        <label for="catOverride">Category</label>
+        <select id="catOverride"></select>
+        <span class="hint">Set by the model as you type. Change it if it is wrong.</span>
+      </div>
+      <button class="btn" type="submit">Submit report</button>
+      <div id="done" class="ok-box" hidden></div>
+    </form>
+
+    <aside class="panel model" aria-live="polite">
+      <h3>What the model sees</h3>
+      <div id="pred"></div>
+      <p class="note">Classifier: a multinomial Naive Bayes model over words, trained on the example complaints in this page's script and running in your browser. To use your own trained model, replace <code>classify(text)</code> with a call to your API; the rest of the page only needs a label, a confidence and a priority.</p>
+    </aside>
+  </div>
+</section>
+
+<!-- TRACK -->
+<section id="v-track" hidden>
+  <div class="intro"><h2>Track a report</h2><p>Enter the ticket number you received after submitting, or pick one from the list.</p></div>
+  <form class="search" id="searchForm">
+    <label for="tid" class="lbl" style="position:absolute;left:-9999px">Ticket number</label>
+    <input type="text" id="tid" placeholder="e.g. GV-0003">
+    <button class="btn" type="submit">Find report</button>
+  </form>
+  <div class="grid2">
+    <div id="ticket"></div>
+    <div><h3 style="margin-bottom:10px">Recent reports</h3><div class="cards" id="recent"></div></div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="v-dashboard" hidden>
+  <div class="intro"><h2>Panchayat dashboard</h2><p>Every report sorted by urgency. Move a report forward when work begins or finishes and the citizen sees it on the Track page.</p></div>
+  <div class="tiles" id="tiles"></div>
+  <div class="grid2" style="margin-bottom:20px">
+    <div class="panel"><h3>Reports by category</h3><div class="bars" id="catBars"></div></div>
+    <div class="panel"><h3>Reports by ward</h3><div class="bars" id="wardBars"></div></div>
+  </div>
+  <div class="filters">
+    <label class="lbl" for="fStatus" style="align-self:center">Status</label>
+    <select id="fStatus"><option value="">All</option><option>Received</option><option>Assigned</option><option>In progress</option><option>Resolved</option></select>
+    <label class="lbl" for="fPri" style="align-self:center">Priority</label>
+    <select id="fPri"><option value="">All</option><option>High</option><option>Medium</option><option>Low</option></select>
+    <button class="btn ghost sm" id="resetData" type="button">Reset sample data</button>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Ticket</th><th>Problem</th><th>Category</th><th>Priority</th><th>Status</th><th>Action</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table></div>
+</section>
+
+<footer>Demo build: reports are saved only in this browser. Rows tagged Sample are example data, not real complaints.</footer>
+</main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ---------- Model: multinomial Naive Bayes on words ---------- */
+var CATS = {
+  "Water Supply":{dept:"Panchayat Water Board",base:2,sla:"2 days"},
+  "Roads & Potholes":{dept:"Rural Roads Wing",base:1,sla:"7 days"},
+  "Street Lights & Power":{dept:"TNEB Local Section",base:1,sla:"3 days"},
+  "Garbage & Sanitation":{dept:"Sanitation Workers Unit",base:1,sla:"3 days"},
+  "Drainage & Flooding":{dept:"Panchayat Engineer",base:2,sla:"2 days"},
+  "Health & Safety":{dept:"Primary Health Centre",base:2,sla:"1 day"},
+  "Other":{dept:"Panchayat Office",base:0,sla:"7 days"}
+};
+var TRAIN = {
+ "Water Supply":[
+  "no water in the tap since three days","thanni varala tap la thanni illa","drinking water pipe is leaking near the bus stand","overhead tank is empty and water supply stopped",
+  "borewell motor not working no water","hand pump broken water is dirty and smells","pipeline burst water wasting on the street","kudineer thanni supply illai",
+  "குடிநீர் வரவில்லை","தண்ணீர் குழாய் உடைந்து விட்டது","water tank cleaning needed water looks yellow","public tap not giving water"],
+ "Roads & Potholes":[
+  "big pothole on the main road","road is damaged and full of stones","saalai romba mosam pallam irukku","bridge near the canal has cracks",
+  "mud road becomes slippery after rain no proper road","speed breaker needed near school road","road broken bike accident risk","tar road has come off and bumpy",
+  "சாலை சேதமடைந்து உள்ளது","குழி விழுந்த சாலை","culvert collapsed on the village road","street road needs repair cement road"],
+ "Street Lights & Power":[
+  "street light not working near the school","lamp post is off for a week it is dark at night","minsaram illa current cut daily","electric pole is leaning and wires hanging low",
+  "transformer making sparking sound","power cut for two days in our street","light pole broken wire touching tree","street lamp bulb fused",
+  "மின்சாரம் இல்லை","தெரு விளக்கு எரியவில்லை","eb line wire loose live wire danger","high mast light not glowing"],
+ "Garbage & Sanitation":[
+  "garbage is not collected for many days","kuppai pile near the temple smells bad","waste dumped on the roadside burning plastic","dustbin overflowing and flies everywhere",
+  "public toilet is dirty and locked","open defecation and dirty surroundings","dead animal lying near the street","kuppai vandi varala",
+  "குப்பை அள்ளப்படவில்லை","குப்பை கொட்டுகிறார்கள்","street cleaning not done sweeping needed","compost yard is overflowing with waste"],
+ "Drainage & Flooding":[
+  "drain is blocked and sewage overflowing","kalivu neer street la odudhu","rain water flooding the houses","stagnant water breeding mosquitoes",
+  "gutter open and dirty water on the road","sewage mixing with drinking water","pond overflowing into homes after heavy rain","canal is choked with plastic",
+  "சாக்கடை அடைப்பு","மழை நீர் தேங்கி உள்ளது","waterlogging near the school after rain","drainage pipe broken and smelling"],
+ "Health & Safety":[
+  "many people have fever mosquito dengue cases","health centre has no doctor","ambulance not available at night","stray dogs biting children",
+  "snake found near the houses","fire in the dry grass near huts","child fell and injured no help nearby","medicine not available at the clinic",
+  "காய்ச்சல் பரவுகிறது","தெரு நாய்கள் கடிக்கின்றன","accident on the highway junction needs help","anganwadi has food poisoning cases"],
+ "Other":[
+  "request for a new community hall","ration shop timing problem","school building needs painting","need a bus service to the village",
+  "ration card correction","pension not received this month","please arrange a gram sabha meeting","playground land encroachment"]
+};
+var STOP = "the is are was a an of in on at to for and or it this that with near our we has have not no be by from as".split(" ");
+function tokens(t){ return (String(t).toLowerCase().match(/[\p{L}\p{M}]+/gu)||[]).filter(function(w){return w.length>1 && STOP.indexOf(w)<0;}); }
+var MODEL = (function(){
+  var counts={}, totals={}, vocab={}, docs={}, nDocs=0;
+  Object.keys(TRAIN).forEach(function(c){
+    counts[c]={}; totals[c]=0; docs[c]=TRAIN[c].length; nDocs+=TRAIN[c].length;
+    TRAIN[c].forEach(function(s){ tokens(s).forEach(function(w){ counts[c][w]=(counts[c][w]||0)+1; totals[c]++; vocab[w]=1; }); });
+  });
+  return {counts:counts,totals:totals,V:Object.keys(vocab).length,docs:docs,nDocs:nDocs,vocab:vocab};
+})();
+var URGENT = ["burst","fire","accident","injured","snake","dengue","fever","sparking","live","danger","leaning","collapsed","flooding","overflowing","children","child","ambulance","bites","biting","sewage","dead","wire","wires"];
+var DURATION = ["days","week","weeks","month","daily","romba","since"];
+function classify(text){
+  var toks = tokens(text).filter(function(w){return MODEL.vocab[w];});
+  var cats = Object.keys(CATS), logs = {}, max=-Infinity;
+  cats.forEach(function(c){
+    var lp = Math.log(MODEL.docs[c]/MODEL.nDocs);
+    toks.forEach(function(w){ lp += Math.log(((MODEL.counts[c][w]||0)+1)/(MODEL.totals[c]+MODEL.V)); });
+    logs[c]=lp; if(lp>max) max=lp;
+  });
+  var sum=0; cats.forEach(function(c){ logs[c]=Math.exp(logs[c]-max); sum+=logs[c]; });
+  var ranked = cats.map(function(c){return {cat:c,p:logs[c]/sum};}).sort(function(a,b){return b.p-a.p;});
+  var all = tokens(text), score = CATS[ranked[0].cat].base, why=[];
+  all.forEach(function(w){ if(URGENT.indexOf(w)>=0){score+=1.5; why.push(w);} if(DURATION.indexOf(w)>=0){score+=0.75;} });
+  var priority = score>=3.5 ? "High" : score>=2 ? "Medium" : "Low";
+  return {known:toks.length, label:ranked[0].cat, confidence:ranked[0].p, ranked:ranked.slice(0,3), priority:priority, cues:why.slice(0,4)};
+}
+
+/* ---------- Storage ---------- */
+var KEY="gramvoice.reports.v1", reports=[];
+var STAGES=["Received","Assigned","In progress","Resolved"];
+function ago(h){ return new Date(Date.now()-h*3600000).toISOString(); }
+function seed(){
+  function mk(n,cat,pri,st,desc,ward,place,h,name){
+    var log=[]; for(var i=0;i<=st;i++) log.push({s:STAGES[i],t:ago(Math.max(1,h-i*9))});
+    return {id:"GV-"+String(n).padStart(4,"0"),cat:cat,pri:pri,stage:st,desc:desc,ward:ward,place:place,name:name,created:ago(h),log:log,sample:true,photo:null,conf:0.82};
+  }
+  return [
+    mk(1,"Water Supply","High",1,"Tap water has not come for three days. Old people in the street are carrying pots from the next village.","Ward 3","Pillaiyar Koil Street",70,"Example"),
+    mk(2,"Street Lights & Power","High",2,"Wire hanging low near the school gate after last night's wind. Children pass here every morning.","Ward 5","Govt. school gate",30,"Example"),
+    mk(3,"Roads & Potholes","Medium",0,"Big pothole on the road to the weekly market, two bikes have already fallen.","Ward 1","Market road",20,"Example"),
+    mk(4,"Garbage & Sanitation","Low",3,"Garbage bin near the temple tank was overflowing for a week. Now cleared.","Ward 2","Temple tank",120,"Example"),
+    mk(5,"Drainage & Flooding","Medium",1,"Drain is blocked and dirty water is standing in front of houses after rain.","Ward 6","North Street",48,"Example"),
+    mk(6,"Health & Safety","High",0,"Stray dogs are chasing children near the anganwadi in the evening.","Ward 4","Anganwadi centre",6,"Example")
+  ];
+}
+function load(){ try{ var r=localStorage.getItem(KEY); if(r){ reports=JSON.parse(r); return; } }catch(e){} reports=seed(); }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(reports)); }catch(e){} }
+function nextId(){ var m=0; reports.forEach(function(r){ var n=parseInt(r.id.slice(3),10); if(n>m)m=n; }); return "GV-"+String(m+1).padStart(4,"0"); }
+
+/* ---------- Helpers ---------- */
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function fmt(iso){ var d=new Date(iso); return d.toLocaleString("en-IN",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}); }
+function toast(m){ var t=$("toast"); t.textContent=m; t.hidden=false; clearTimeout(toast.h); toast.h=setTimeout(function(){t.hidden=true;},2600); }
+function pct(x){ return Math.round(x*100)+"%"; }
+
+/* ---------- Report view ---------- */
+var photoData=null, lastPred=null, userChangedCat=false;
+function fillCats(){ var s=$("catOverride"); s.innerHTML=Object.keys(CATS).map(function(c){return "<option>"+esc(c)+"</option>";}).join(""); }
+function renderPred(){
+  var text=$("desc").value.trim(), box=$("pred");
+  if(text.length<8){ lastPred=null; box.innerHTML='<p class="hint" style="margin-top:8px">Start typing the problem and the predicted category, urgency and department will appear here.</p>'; return; }
+  var p=classify(text); lastPred=p;
+  if(!userChangedCat) $("catOverride").value=p.label;
+  var cat=$("catOverride").value, info=CATS[cat];
+  var low = p.known===0;
+  var bars=p.ranked.map(function(r){ return '<div class="bar-row"><span>'+esc(r.cat)+'</span><div class="track"><div class="fill" style="width:'+Math.round(r.p*100)+'%"></div></div><span class="num">'+pct(r.p)+'</span></div>'; }).join("");
+  box.innerHTML =
+   '<div class="pred-main"><strong>'+esc(low?"Other":p.label)+'</strong><span class="pill '+p.priority+'">'+p.priority+' priority</span></div>'+
+   (low?'<p class="hint">No known words found, so this goes to the general office. Add more detail to improve the match.</p>':'')+
+   '<div class="bars" aria-label="Top three category scores">'+bars+'</div>'+
+   '<dl class="meta"><dt>Goes to</dt><dd>'+esc(info.dept)+'</dd><dt>Target time</dt><dd>'+esc(info.sla)+'</dd>'+
+   '<dt>Urgency cues</dt><dd>'+(p.cues.length?esc(p.cues.join(", ")):"none found")+'</dd></dl>';
+}
+function onPhoto(e){
+  var f=e.target.files[0]; if(!f){photoData=null;$("photoPrev").hidden=true;return;}
+  var rd=new FileReader();
+  rd.onload=function(){ var im=new Image(); im.onload=function(){
+      var w=Math.min(320,im.width), h=Math.round(im.height*w/im.width), c=document.createElement("canvas"); c.width=w; c.height=h;
+      c.getContext("2d").drawImage(im,0,0,w,h); photoData=c.toDataURL("image/jpeg",0.6);
+      $("photoPrev").src=photoData; $("photoPrev").hidden=false; };
+    im.src=rd.result; };
+  rd.readAsDataURL(f);
+}
+function submitReport(e){
+  e.preventDefault();
+  var text=$("desc").value.trim();
+  if(text.length<8){ $("descHint").textContent="Please describe the problem in a sentence or two."; $("descHint").style.color="var(--crit)"; $("desc").focus(); return; }
+  var p=classify(text), cat=$("catOverride").value||p.label, now=new Date().toISOString();
+  var r={id:nextId(),cat:cat,pri:p.priority,stage:0,desc:text,ward:$("ward").value,place:$("place").value.trim()||"Not given",
+    name:$("name").value.trim()||"Anonymous",created:now,log:[{s:"Received",t:now}],sample:false,photo:photoData,conf:p.confidence};
+  reports.unshift(r); save();
+  var d=$("done"); d.hidden=false;
+  d.innerHTML="Report received. Your ticket number is <strong>"+r.id+"</strong>. It was sent to "+esc(CATS[cat].dept)+" as "+r.pri+" priority. <a href=\"#track\" data-open=\""+r.id+"\">Track it</a>";
+  $("form").reset(); photoData=null; $("photoPrev").hidden=true; userChangedCat=false; $("descHint").style.color=""; $("descHint").textContent="Write at least a short sentence so the model has something to read."; renderPred();
+}
+
+/* ---------- Track view ---------- */
+function showTicket(id){
+  var r=reports.filter(function(x){return x.id.toLowerCase()===String(id).trim().toLowerCase();})[0], box=$("ticket");
+  if(!r){ box.innerHTML='<div class="panel empty">No report found with that number. Check the ticket and try again.</div>'; return; }
+  var tl=STAGES.map(function(s,i){
+    var ev=r.log.filter(function(l){return l.s===s;})[0], cls=i<=r.stage?"done":"", now=i===r.stage?" now":"";
+    return '<li class="'+cls+now+'"><span class="dot"></span><div><strong>'+s+'</strong><div class="when">'+(ev?fmt(ev.t):"Waiting")+'</div></div></li>'; }).join("");
+  box.innerHTML='<div class="panel ticket"><div><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between"><h3 class="id">'+r.id+'</h3><span><span class="pill '+r.pri+'">'+r.pri+'</span> <span class="pill st '+STAGES[r.stage]+'">'+STAGES[r.stage]+'</span>'+(r.sample?' <span class="pill sample">Sample</span>':'')+'</span></div>'+
+   '<p style="margin-top:10px">'+esc(r.desc)+'</p></div>'+
+   (r.photo?'<img src="'+r.photo+'" alt="Photo attached to the report" style="border-radius:8px;max-width:240px">':'')+
+   '<dl class="meta"><dt>Category</dt><dd>'+esc(r.cat)+'</dd><dt>Department</dt><dd>'+esc(CATS[r.cat].dept)+'</dd><dt>Location</dt><dd>'+esc(r.ward)+', '+esc(r.place)+'</dd><dt>Reported by</dt><dd>'+esc(r.name)+'</dd></dl>'+
+   '<ol class="timeline">'+tl+'</ol></div>';
+}
+function renderRecent(){
+  var h=reports.slice(0,8).map(function(r){ return '<button class="mini" data-open="'+r.id+'"><div class="t"><strong class="id">'+r.id+'</strong><div>'+esc(r.desc)+'</div></div><span class="pill st '+STAGES[r.stage]+'">'+STAGES[r.stage]+'</span></button>'; }).join("");
+  $("recent").innerHTML=h||'<div class="empty">No reports yet.</div>';
+}
+
+/* ---------- Dashboard ---------- */
+function countBy(key){ var m={}; reports.forEach(function(r){ m[r[key]]=(m[r[key]]||0)+1; }); return m; }
+function barList(m,el){
+  var keys=Object.keys(m).sort(function(a,b){return m[b]-m[a];}), max=Math.max.apply(null,keys.map(function(k){return m[k];}).concat([1]));
+  el.innerHTML=keys.map(function(k){ return '<div class="bar-row"><span title="'+esc(k)+'">'+esc(k)+'</span><div class="track"><div class="fill" style="width:'+Math.round(m[k]/max*100)+'%"></div></div><span class="num">'+m[k]+'</span></div>'; }).join("")||'<p class="hint">No data.</p>';
+}
+function renderDash(){
+  var open=reports.filter(function(r){return r.stage<3;}), high=open.filter(function(r){return r.pri==="High";}), done=reports.filter(function(r){return r.stage===3;});
+  $("tiles").innerHTML=
+   '<div class="tile"><b>'+reports.length+'</b><span>Total reports</span></div>'+
+   '<div class="tile"><b>'+open.length+'</b><span>Still open</span></div>'+
+   '<div class="tile crit"><b>'+high.length+'</b><span>High priority open</span></div>'+
+   '<div class="tile"><b>'+(reports.length?Math.round(done.length/reports.length*100):0)+'%</b><span>Resolved</span></div>';
+  barList(countBy("cat"),$("catBars")); barList(countBy("ward"),$("wardBars"));
+  var fs=$("fStatus").value, fp=$("fPri").value, order={High:0,Medium:1,Low:2};
+  var list=reports.filter(function(r){return (!fs||STAGES[r.stage]===fs)&&(!fp||r.pri===fp);})
+    .sort(function(a,b){ return (a.stage===3)-(b.stage===3) || order[a.pri]-order[b.pri] || new Date(a.created)-new Date(b.created); });
+  $("rows").innerHTML=list.map(function(r){
+    var btn=r.stage<3?'<button class="btn sm" data-adv="'+r.id+'">Mark '+STAGES[r.stage+1].toLowerCase()+'</button>':'<span class="hint">Closed</span>';
+    return '<tr><td><span class="id">'+r.id+'</span><div class="hint">'+esc(r.ward)+(r.sample?' · Sample':'')+'</div></td><td><strong>'+esc(r.place)+'</strong><div class="desc">'+esc(r.desc)+'</div></td><td>'+esc(r.cat)+'<div class="hint">'+esc(CATS[r.cat].dept)+'</div></td><td><span class="pill '+r.pri+'">'+r.pri+'</span></td><td><span class="pill st '+STAGES[r.stage]+'">'+STAGES[r.stage]+'</span></td><td>'+btn+'</td></tr>';
+  }).join("")||'<tr><td colspan="6" class="empty">No reports match these filters.</td></tr>';
+}
+
+/* ---------- Routing and events ---------- */
+var VIEWS=["report","track","dashboard"];
+function route(){
+  var v=location.hash.replace("#",""); if(VIEWS.indexOf(v)<0) v="report";
+  VIEWS.forEach(function(n){ $("v-"+n).hidden=(n!==v); });
+  document.querySelectorAll("nav a").forEach(function(a){ if(a.dataset.view===v) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  if(v==="track"){ renderRecent(); if(!$("ticket").innerHTML && reports[0]) showTicket(reports[0].id); }
+  if(v==="dashboard") renderDash();
+  if(v==="report") renderPred();
+}
+document.addEventListener("click",function(e){
+  var o=e.target.closest("[data-open]");
+  if(o){ var id=o.dataset.open; if(location.hash!=="#track"){ location.hash="#track"; } setTimeout(function(){ $("tid").value=id; showTicket(id); },0); }
+  var a=e.target.closest("[data-adv]");
+  if(a){ var r=reports.filter(function(x){return x.id===a.dataset.adv;})[0]; if(r&&r.stage<3){ r.stage++; r.log.push({s:STAGES[r.stage],t:new Date().toISOString()}); save(); renderDash(); toast(r.id+" is now "+STAGES[r.stage]); } }
+});
+window.addEventListener("hashchange",route);
+$("form").addEventListener("submit",submitReport);
+var deb; $("desc").addEventListener("input",function(){ clearTimeout(deb); deb=setTimeout(renderPred,150); });
+$("catOverride").addEventListener("change",function(){ userChangedCat=true; renderPred(); });
+$("photo").addEventListener("change",onPhoto);
+$("searchForm").addEventListener("submit",function(e){ e.preventDefault(); showTicket($("tid").value); });
+$("fStatus").addEventListener("change",renderDash); $("fPri").addEventListener("change",renderDash);
+$("resetData").addEventListener("click",function(){ reports=seed(); save(); renderDash(); toast("Sample data restored"); });
+
+fillCats(); load(); route();
+</script>
+
+</body></html>
